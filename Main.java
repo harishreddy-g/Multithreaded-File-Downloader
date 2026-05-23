@@ -30,12 +30,16 @@ public class Main {
             byte[] buffer = new byte[4096];
 
             int bytesRead;
+            int downloaded =0;
 
             while((bytesRead = in.read(buffer)) != -1) {
 
                 System.out.println(bytesRead);
 
                 out.write(buffer, 0, bytesRead);
+                downloaded+=bytesRead;
+                int percentage = (downloaded*100)/fileSize;
+                System.out.println("Downloaded : "+percentage+"%");
 
             }
 
