@@ -5,9 +5,28 @@ import java.io.FileOutputStream;
 
 class DownloadTask implements Runnable {
 
+    int start;
+    int end;
+
+    DownloadTask(int start, int end) {
+
+        this.start = start;
+        this.end = end;
+
+    }
+
     public void run() {
 
         try {
+
+            System.out.println(
+                    Thread.currentThread().getName()
+            );
+
+            System.out.println(
+                    "Downloading bytes: "
+                    + start + " to " + end
+            );
 
             URL url = new URL("https://picsum.photos/200");
 
@@ -18,14 +37,20 @@ class DownloadTask implements Runnable {
 
             int fileSize = con.getContentLength();
 
-            System.out.println("Response Code: " + responseCode);
+            System.out.println(
+                    "Response Code: " + responseCode
+            );
 
-            System.out.println("File Size: " + fileSize);
+            System.out.println(
+                    "File Size: " + fileSize
+            );
 
             InputStream in = con.getInputStream();
 
             FileOutputStream out =
-                    new FileOutputStream("img.jpg");
+                    new FileOutputStream(
+                            "img_" + start + ".jpg"
+                    );
 
             byte[] buffer = new byte[4096];
 
@@ -49,7 +74,8 @@ class DownloadTask implements Runnable {
                     if (percentage != lastPercentage) {
 
                         System.out.println(
-                                "Downloaded : "
+                                Thread.currentThread().getName()
+                                + " : "
                                 + percentage + "%"
                         );
 
@@ -64,7 +90,10 @@ class DownloadTask implements Runnable {
             in.close();
             out.close();
 
-            System.out.println("Download Complete");
+            System.out.println(
+                    Thread.currentThread().getName()
+                    + " Download Complete"
+            );
 
         } catch (Exception e) {
 
@@ -78,13 +107,38 @@ public class Main {
 
     public static void main(String[] args) {
 
-        DownloadTask task = new DownloadTask();
+        int fileSize = 1000;
 
-        Thread t1 = new Thread(task);
+        int numberOfThreads = 5;
 
-        t1.start();
+        int chunkSize =
+                fileSize / numberOfThreads;
 
-        System.out.println("Main Thread Running...");
+        for(int i = 0; i < numberOfThreads; i++) {
 
+            int start = i * chunkSize;
+
+            int end =
+                    (start + chunkSize) - 1;
+
+            if(i == numberOfThreads - 1) {
+
+                end = fileSize - 1;
+
+            }
+
+            DownloadTask task =
+                    new DownloadTask(start, end);
+
+            Thread t =
+                    new Thread(task);
+
+            t.start();
+
+        }
+
+        System.out.println(
+                "Main Thread Running..."
+        );
     }
 }
