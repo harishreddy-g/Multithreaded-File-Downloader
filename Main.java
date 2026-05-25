@@ -3,9 +3,9 @@ import java.net.HttpURLConnection;
 import java.io.InputStream;
 import java.io.FileOutputStream;
 
-public class Main {
+class DownloadTask implements Runnable {
 
-    public static void main(String[] args) {
+    public void run() {
 
         try {
 
@@ -30,16 +30,34 @@ public class Main {
             byte[] buffer = new byte[4096];
 
             int bytesRead;
-            int downloaded =0;
 
-            while((bytesRead = in.read(buffer)) != -1) {
+            int downloaded = 0;
 
-                System.out.println(bytesRead);
+            int lastPercentage = 0;
+
+            while ((bytesRead = in.read(buffer)) != -1) {
 
                 out.write(buffer, 0, bytesRead);
-                downloaded+=bytesRead;
-                int percentage = (downloaded*100)/fileSize;
-                System.out.println("Downloaded : "+percentage+"%");
+
+                downloaded += bytesRead;
+
+                if (fileSize > 0) {
+
+                    int percentage =
+                            (downloaded * 100) / fileSize;
+
+                    if (percentage != lastPercentage) {
+
+                        System.out.println(
+                                "Downloaded : "
+                                + percentage + "%"
+                        );
+
+                        lastPercentage = percentage;
+                    }
+                }
+
+                Thread.sleep(100);
 
             }
 
@@ -48,10 +66,25 @@ public class Main {
 
             System.out.println("Download Complete");
 
-        } catch(Exception e) {
+        } catch (Exception e) {
 
             System.out.println(e);
 
         }
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        DownloadTask task = new DownloadTask();
+
+        Thread t1 = new Thread(task);
+
+        t1.start();
+
+        System.out.println("Main Thread Running...");
+
     }
 }
