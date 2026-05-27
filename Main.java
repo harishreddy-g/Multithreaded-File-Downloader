@@ -28,31 +28,43 @@ class DownloadTask implements Runnable {
                     + start + " to " + end
             );
 
-            URL url = new URL("https://picsum.photos/200");
+            URL url = new URL("https://picsum.photos/600");
 
             HttpURLConnection con =
                     (HttpURLConnection) url.openConnection();
 
-            int responseCode = con.getResponseCode();
+            // DAY 9 CONCEPT
+            con.setRequestProperty(
+                    "Range",
+                    "bytes=" + start + "-" + end
+            );
 
-            int fileSize = con.getContentLength();
+            int responseCode =
+                    con.getResponseCode();
+
+            int fileSize =
+                    con.getContentLength();
 
             System.out.println(
-                    "Response Code: " + responseCode
+                    "Response Code: "
+                    + responseCode
             );
 
             System.out.println(
-                    "File Size: " + fileSize
+                    "File Size: "
+                    + fileSize
             );
 
-            InputStream in = con.getInputStream();
+            InputStream in =
+                    con.getInputStream();
 
             FileOutputStream out =
                     new FileOutputStream(
-                            "img_" + start + ".jpg"
+                            "part_" + start + ".tmp"
                     );
 
-            byte[] buffer = new byte[4096];
+            byte[] buffer =
+                    new byte[4096];
 
             int bytesRead;
 
@@ -60,26 +72,39 @@ class DownloadTask implements Runnable {
 
             int lastPercentage = 0;
 
-            while ((bytesRead = in.read(buffer)) != -1) {
+            while((bytesRead =
+                    in.read(buffer)) != -1) {
 
-                out.write(buffer, 0, bytesRead);
+                out.write(
+                        buffer,
+                        0,
+                        bytesRead
+                );
 
                 downloaded += bytesRead;
 
-                if (fileSize > 0) {
+                if(fileSize > 0) {
 
                     int percentage =
-                            (downloaded * 100) / fileSize;
+                            (downloaded * 100)
+                            / fileSize;
 
-                    if (percentage != lastPercentage) {
+                    if(percentage
+                            != lastPercentage) {
 
                         System.out.println(
-                                Thread.currentThread().getName()
+
+                                Thread.currentThread()
+                                        .getName()
+
                                 + " : "
+
                                 + percentage + "%"
+
                         );
 
-                        lastPercentage = percentage;
+                        lastPercentage =
+                                percentage;
                     }
                 }
 
@@ -91,11 +116,15 @@ class DownloadTask implements Runnable {
             out.close();
 
             System.out.println(
-                    Thread.currentThread().getName()
+
+                    Thread.currentThread()
+                            .getName()
+
                     + " Download Complete"
+
             );
 
-        } catch (Exception e) {
+        } catch(Exception e) {
 
             System.out.println(e);
 
@@ -114,9 +143,12 @@ public class Main {
         int chunkSize =
                 fileSize / numberOfThreads;
 
-        for(int i = 0; i < numberOfThreads; i++) {
+        for(int i = 0;
+            i < numberOfThreads;
+            i++) {
 
-            int start = i * chunkSize;
+            int start =
+                    i * chunkSize;
 
             int end =
                     (start + chunkSize) - 1;
