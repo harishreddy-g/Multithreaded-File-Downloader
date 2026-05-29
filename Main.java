@@ -2,30 +2,27 @@ import java.net.URL;
 import java.net.HttpURLConnection;
 import java.io.InputStream;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 
 class DownloadTask implements Runnable {
 
-    int start;
-    int end;
+    private int start;
+    private int end;
 
     DownloadTask(int start, int end) {
-
         this.start = start;
         this.end = end;
-
     }
 
+    @Override
     public void run() {
 
         try {
 
             System.out.println(
                     Thread.currentThread().getName()
-            );
-
-            System.out.println(
-                    "Downloading bytes: "
-                    + start + " to " + end
+                            + " downloading bytes "
+                            + start + " - " + end
             );
 
             URL url = new URL("https://picsum.photos/600");
@@ -33,7 +30,7 @@ class DownloadTask implements Runnable {
             HttpURLConnection con =
                     (HttpURLConnection) url.openConnection();
 
-            // DAY 9 CONCEPT
+            // DAY 9: RANGE HEADER
             con.setRequestProperty(
                     "Range",
                     "bytes=" + start + "-" + end
@@ -46,13 +43,9 @@ class DownloadTask implements Runnable {
                     con.getContentLength();
 
             System.out.println(
-                    "Response Code: "
-                    + responseCode
-            );
-
-            System.out.println(
-                    "File Size: "
-                    + fileSize
+                    Thread.currentThread().getName()
+                            + " Response Code: "
+                            + responseCode
             );
 
             InputStream in =
@@ -72,8 +65,7 @@ class DownloadTask implements Runnable {
 
             int lastPercentage = 0;
 
-            while((bytesRead =
-                    in.read(buffer)) != -1) {
+            while ((bytesRead = in.read(buffer)) != -1) {
 
                 out.write(
                         buffer,
@@ -83,24 +75,20 @@ class DownloadTask implements Runnable {
 
                 downloaded += bytesRead;
 
-                if(fileSize > 0) {
+                if (fileSize > 0) {
 
                     int percentage =
                             (downloaded * 100)
-                            / fileSize;
+                                    / fileSize;
 
-                    if(percentage
-                            != lastPercentage) {
+                    if (percentage != lastPercentage) {
 
                         System.out.println(
-
                                 Thread.currentThread()
                                         .getName()
-
-                                + " : "
-
-                                + percentage + "%"
-
+                                        + " : "
+                                        + percentage
+                                        + "%"
                         );
 
                         lastPercentage =
@@ -109,25 +97,23 @@ class DownloadTask implements Runnable {
                 }
 
                 Thread.sleep(100);
-
             }
 
             in.close();
             out.close();
 
             System.out.println(
-
-                    Thread.currentThread()
-                            .getName()
-
-                    + " Download Complete"
-
+                    Thread.currentThread().getName()
+                            + " Download Complete"
             );
 
-        } catch(Exception e) {
+        } catch (Exception e) {
 
-            System.out.println(e);
-
+            System.out.println(
+                    Thread.currentThread().getName()
+                            + " Error: "
+                            + e
+            );
         }
     }
 }
@@ -136,41 +122,136 @@ public class Main {
 
     public static void main(String[] args) {
 
-        int fileSize = 1000;
+        try {
 
-        int numberOfThreads = 5;
+            // DAY 8: FILE SPLITTING
 
-        int chunkSize =
-                fileSize / numberOfThreads;
+            int fileSize = 1000; // learning purpose
 
-        for(int i = 0;
-            i < numberOfThreads;
-            i++) {
+            int numberOfThreads = 5;
 
-            int start =
-                    i * chunkSize;
+            int chunkSize =
+                    fileSize / numberOfThreads;
 
-            int end =
-                    (start + chunkSize) - 1;
+            Thread[] threads =
+                    new Thread[numberOfThreads];
 
-            if(i == numberOfThreads - 1) {
+            for (int i = 0;
+                 i < numberOfThreads;
+                 i++) {
 
-                end = fileSize - 1;
+                int start =
+                        i * chunkSize;
 
+                int end =
+                        (start + chunkSize) - 1;
+
+                if (i ==
+                        numberOfThreads - 1) {
+
+                    end = fileSize - 1;
+                }
+
+                System.out.println(
+                        "Thread "
+                                + (i + 1)
+                                + " -> "
+                                + start
+                                + " to "
+                                + end
+                );
+
+                DownloadTask task =
+                        new DownloadTask(
+                                start,
+                                end
+                        );
+
+                Thread t =
+                        new Thread(task);
+
+                threads[i] = t;
+
+                t.start();
             }
 
-            DownloadTask task =
-                    new DownloadTask(start, end);
+            System.out.println(
+                    "Main Thread Waiting..."
+            );
 
-            Thread t =
-                    new Thread(task);
+            // DAY 10: JOIN
 
-            t.start();
+            for (int i = 0;
+                 i < numberOfThreads;
+                 i++) {
 
+                threads[i].join();
+            }
+
+            System.out.println(
+                    "\nAll downloads completed."
+            );
+
+            // DAY 10: MERGE FILES
+
+            FileOutputStream mergedFile =
+                    new FileOutputStream(
+                            "final_image.jpg"
+                    );
+
+            byte[] buffer =
+                    new byte[4096];
+
+            for (int i = 0;
+                 i < numberOfThreads;
+                 i++) {
+
+                int start =
+                        i * chunkSize;
+
+                String fileName =
+                        "part_"
+                                + start
+                                + ".tmp";
+
+                System.out.println(
+                        "Merging "
+                                + fileName
+                );
+
+                FileInputStream in =
+                        new FileInputStream(
+                                fileName
+                        );
+
+                int bytesRead;
+
+                while ((bytesRead =
+                        in.read(buffer)) != -1) {
+
+                    mergedFile.write(
+                            buffer,
+                            0,
+                            bytesRead
+                    );
+                }
+
+                in.close();
+            }
+
+            mergedFile.close();
+
+            System.out.println(
+                    "\nMerge Complete!"
+            );
+
+            System.out.println(
+                    "Final File: final_image.jpg"
+            );
+
+        } catch (Exception e) {
+
+            System.out.println(e);
         }
-
-        System.out.println(
-                "Main Thread Running..."
-        );
     }
 }
